@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_id">463307775141</string>
+    <string name="achievement_defeat_2_straw_rogues_in_wushu_gardens_with_howlin_henry_in_a_single_run">CgkIpbmu-r0NEAIQAg</string>
+    <string name="achievement_collect_100_coins_in_wushu_gardens_with_howlin_henry_in_a_single_run">CgkIpbmu-r0NEAIQAw</string>
+    <string name="leaderboard_wushu_gardens">CgkIpbmu-r0NEAIQAQ</string>
+    <string name="leaderboard_pings_palace">CgkIpbmu-r0NEAIQBA</string>
+    <string name="leaderboard_windu_wood">CgkIpbmu-r0NEAIQBQ</string>
+    <string name="leaderboard_pinyin_mountain">CgkIpbmu-r0NEAIQBg</string>
+    <string name="leaderboard_daku_cave">CgkIpbmu-r0NEAIQBw</string>
+</resources>

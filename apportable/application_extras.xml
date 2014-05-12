@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<application xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <application>
+        
+        <activity
+            android:name="com.kamcord.android.KamcordActivity"
+            android:launchMode="singleTask"
+            android:configChanges="keyboardHidden|keyboard"
+            android:windowSoftInputMode="stateHidden|adjustPan"
+            android:windowActionBar="false" >
+        </activity>
+        
+        <activity
+            android:name="com.kamcord.android.ReplayActivity"
+            android:label="Watch"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+            android:launchMode="singleTask"
+            android:parentActivityName="com.kamcord.android.KamcordActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden" >
+            <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.kamcord.android.KamcordActivity" />
+        </activity>
+        
+        <activity
+            android:name="com.kamcord.android.WebActivity"
+            android:label="Login"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+            android:launchMode="singleTask"
+            android:parentActivityName="com.kamcord.android.KamcordActivity"
+            android:configChanges="orientation|screenSize|keyboardHidden" >
+            <meta-data
+            android:name="android.support.PARENT_ACTIVITY"
+            android:value="com.kamcord.android.KamcordActivity" />
+        </activity>
+        
+    </application>
+</manifest>

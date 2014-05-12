@@ -1,0 +1,318 @@
+package com.anotherplace.java;
+
+import com.anotherplace.java.*;
+
+import com.fusepowered.fuseactivities.FuseApiAdBrowser;
+import com.fusepowered.fuseapi.*;
+import com.fusepowered.util.*;
+import com.fusepowered.activities.*;
+
+import android.util.Log;
+import android.content.Context;
+import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Intent;
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
+//import android.R;
+
+import com.anotherplaceproductions.game1.R;
+import com.apportable.activity.VerdeActivity;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import android.net.Uri;
+
+import gms.common.api.*;
+//import com.google.example.games.basegameutils.BaseGameActivity;
+//import com.google.android.gms.common.api.ResultCallback;
+
+public class FuseBridge
+{
+	private native void sessionStartReceivedCallback();
+	private native void gameConfigurationReceivedCallback();
+	private native void adAvailabilityResponseCallback(int num, int error);
+	private native void adWillCloseCallback();
+	private native void notificationActionCallback(String action);
+    
+    private FuseAdCallback fuseCallback;
+    
+
+    private static final String TAG = "FuseBridge";
+	Activity mainActivity;
+
+    public FuseBridge(Activity activity, String key)
+    {
+		mainActivity = activity;
+        
+        fuseCallback = new FuseAdCallback()
+        {
+			@Override
+			public void sessionStartReceived()
+			{
+				sessionStartReceivedCallback();
+			}
+			
+			@Override public void gameConfigurationReceived()
+			{
+				gameConfigurationReceivedCallback();
+			}
+
+            @Override public void adAvailabilityResponse(int num, int error)
+            {
+                Log.d(TAG, "adAvailabilityResponse Num=" + num + " Error=" + error);
+                adAvailabilityResponseCallback(num, error);
+            }
+            
+            @Override public void notificationAction(String action)
+            {
+				if(action.startsWith("market"))
+				{
+					Intent intent = new Intent(Intent.ACTION_VIEW);
+					intent.setData(Uri.parse(action));
+					mainActivity.startActivity(intent);
+				}
+				else
+				{
+				   Log.d(TAG, "notificationAction " + action);
+				   notificationActionCallback(action);
+				}
+            }
+            
+            @Override
+            public void adDisplayed()
+            {
+                Log.d(TAG, "adDisplayed");
+            }
+            
+            @Override
+            public void adClicked()
+            {
+                Log.d(TAG, "adClicked");
+            }
+            
+            @Override
+            public void adWillClose()
+            {
+                Log.d(TAG, "adWillClose");
+                adWillCloseCallback();
+            }
+            
+			@Override public void accountLoginComplete(int arg0, String arg1) {}
+			@Override public void callback() {}
+			@Override public void chatListError(FuseChatError arg0) { }
+			@Override public void chatListReceived(ArrayList<ChatMessage> arg0, String arg1) { }
+			@Override public void friendAccepted(String arg0, FuseAcceptFriendError arg1) {}
+			@Override public void friendAdded(String arg0, FuseAddFriendError arg1) {}
+			@Override public void friendRejected(String arg0, FuseRejectFriendError arg1) {}
+			@Override public void friendRemoved(String arg0, FuseRemoveFriendError arg1) {}
+			@Override public void friendsListError(FuseFriendsListError arg0) {}
+			@Override public void friendsListUpdated(ArrayList<Player> arg0) {}
+			@Override public void friendsMigrated(String arg0, FuseMigrateFriendsError arg1) {}
+			@Override public void incentiveActionCompletedStatus(String arg0) {}
+			@Override public void mailAcknowledged(int arg0, String arg1, int arg2) {}
+			@Override public void mailError(FuseMailError arg0, int arg1) {}
+			@Override public void mailListError(FuseMailError arg0) {}
+			@Override public void mailListReceived(ArrayList<Mail> arg0, String arg1) {}
+			@Override public void rewardRedeemed(int arg0, int arg1, String arg2, String arg3) {}
+			@Override public void timeUpdated(int arg0) {}
+			@Override public void sessionLoginError(FuseLoginError arg0)
+            {
+                Log.d(TAG, "sessionLoginError");
+            }
+            public void purchaseVerification(int arg0, String arg1, String arg2)
+            {
+                Log.d(TAG, "purchaseVerification");
+            }
+        };
+
+        final Context appContext = activity.getApplicationContext();
+        
+        FuseAPI.startSession(key, mainActivity, appContext, fuseCallback);
+        
+        Log.d(TAG, "Set up notifications...");
+
+        //Send the user to the main screen when they click on the notification. This should be replaced with a more meaningful location designed specifically to handle notifications.
+        Intent forGCM = new Intent(appContext, VerdeActivity.class);
+        //Send a notification icon (for the tray) and large icon for the actual notification message.
+        FuseAPI.setupGCM("463307775141", forGCM, mainActivity, R.drawable.notification, R.drawable.largeicon);
+        FuseAPI.testGCMSetup(activity);
+    }
+	
+	//--------------------------------------------------------------------------------------------------
+	// Register Level
+	//--------------------------------------------------------------------------------------------------
+	public void registerLevel(int level)
+	{
+		FuseAPI.registerLevel(level);
+	}
+	
+	//--------------------------------------------------------------------------------------------------
+	// Register Currency
+	//--------------------------------------------------------------------------------------------------
+	public void registerCurrency(int type, int amount)
+	{
+		FuseAPI.registerCurrency(type, amount);
+	}
+	
+	//--------------------------------------------------------------------------------------------------
+	// Register IAP
+	//--------------------------------------------------------------------------------------------------
+	public void registerPurchase(float price, String currency, String product_id, String order_id, long time_stamp)
+	{
+        PurchaseState state = PurchaseState.PURCHASED;
+        
+        VerifiedPurchase verifiedPurchase = new VerifiedPurchase(state.name(), null, product_id, order_id, time_stamp, null);
+        FuseAPI.registerInAppPurchase(verifiedPurchase, price, currency, fuseCallback);
+        
+        Log.d(TAG, "registerPurchase " + price + currency + " product_id=" + product_id + " order_id=" + order_id);
+	}
+	
+	//--------------------------------------------------------------------------------------------------
+	// Register Events
+	//--------------------------------------------------------------------------------------------------
+	HashMap<String, Number> eventDictionary;
+	
+	public void beginEventDictionary()
+	{
+		eventDictionary = new HashMap<String, Number>();
+	}
+	
+	public void putEventDictionaryItem(String key, int value)
+	{
+		Log.d(TAG, "Adding Item " + key + "=" + value);
+		eventDictionary.put(key, value);
+	}
+	
+	public int registerEvent(String name, String param_name, String param_value)
+	{
+		if(eventDictionary == null)
+		{
+			beginEventDictionary();
+		}
+		
+		Log.d(TAG, "registerEvent: " + name + " " + param_name + "=" + param_value + " Dictionary=" + eventDictionary);
+		FuseEvent e = FuseAPI.registerEvent(name, param_name, param_value, eventDictionary);
+		
+		eventDictionary = null;
+		
+		return e.ordinal();
+	}
+	
+	public int registerEvent(String name)
+	{
+		if(eventDictionary == null)
+		{
+			beginEventDictionary();
+		}
+		
+		Log.d(TAG, "registerEvent: " + name);
+		FuseEvent e = FuseAPI.registerEvent(name, "", "", eventDictionary);
+		return e.ordinal();
+	}
+    
+	//--------------------------------------------------------------------------------------------------
+	// Adverts
+	//--------------------------------------------------------------------------------------------------
+    public void checkAdAvailable()
+    {
+        Log.d(TAG, "checkAdAvailable");
+        FuseAPI.checkAdAvailable(fuseCallback);
+    }
+	
+	public void showAd()
+	{
+		Log.d(TAG, "showAd");
+		
+		mainActivity.runOnUiThread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+                final Context appContext = mainActivity.getApplicationContext();
+				FuseAPI.initializeFuseAPI(mainActivity, appContext);
+				
+				FuseAPI.displayAd(new FuseApiAdBrowser(), fuseCallback);
+			}
+		});
+	}
+	
+	public String getGameConfigurationValue(String key)
+	{
+		return FuseAPI.getGameConfigurationValue(key);
+	}
+    
+    public void displayNotifications()
+    {
+//        mainActivity.runOnUiThread(new Runnable()
+//        {
+//			@Override
+//			public void run()
+//			{
+                AlertDialog.Builder dialog = new AlertDialog.Builder(mainActivity);
+                FuseAPI.displayNotifications(dialog);
+//            }
+//        });
+    }
+    
+    public void registerForRemoteNotifications()
+    {
+//        Intent GCMIntent = new Intent (mainActivity.getApplicationContext(), mainActivity.MainActivity.class);
+//        FuseAPI.setupGCM("AIzaSyD5eTo9Z5hSLc4CgAyhiKszfTbSEky9VZw", GCMIntent, mainActivity);
+    }
+    
+    public void restartApp()
+    {
+        final Context appContext = mainActivity.getApplicationContext();
+        Intent mStartActivity = new Intent(appContext, VerdeActivity.class);
+        int mPendingIntentId = 123456;
+        PendingIntent mPendingIntent = PendingIntent.getActivity(appContext, mPendingIntentId,    mStartActivity, PendingIntent.FLAG_CANCEL_CURRENT);
+        AlarmManager mgr = (AlarmManager)appContext.getSystemService(Context.ALARM_SERVICE);
+        mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 100, mPendingIntent);
+        System.exit(0);
+    }
+    
+    
+    GameHelper mHelper;
+    
+    //----------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------
+    public void loadLeaderboards()
+    {
+        mHelper = new GameHelper(this, GameHelper.CLIENT_ALL);
+        
+        GameHelperListener listener = new GameHelper.GameHelperListener() {
+            @Override
+            public void onSignInSucceeded() {
+                Log.d(TAG, "onSignInSucceeded");
+                // handle sign-in succeess
+            }
+            @Override
+            public void onSignInFailed() {
+                Log.d(TAG, "onSignInFailed");
+                // handle sign-in failure (e.g. show Sign In button)
+            }
+            
+        };
+        mHelper.setup(listener);
+        
+//        VerdeActivity v = (VerdeActivity)mainActivity;
+//        mainActivity.getApiClient();
+        
+        
+//        v.getApiClient().loadLeaderboardMetadata(v, false).setResultCallback(new ResultCallback<Leaderboards.LeaderboardMetadataResult>()
+//        {
+//            @Override
+//            public void onResult(LeaderboardMetadataResult result)
+//            {
+//                if(result.getStatus() == STATUS_OK)
+//                {
+//                    Log.d(TAG, "Loading leaderboard meta-data");
+//                    leaderboardBuffer lb = result.getLeaderboards();
+//                }
+//            }
+//        });
+    }
+}
